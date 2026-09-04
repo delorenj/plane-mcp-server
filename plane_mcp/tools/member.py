@@ -8,7 +8,7 @@ from fastmcp import FastMCP
 from plane.models.query_params import MemberListQueryParams
 
 from plane_mcp.client import get_plane_client_context
-from plane_mcp.toolkit import Action, build_annotations, build_description, missing, opt
+from plane_mcp.toolkit import Action, PerPage, build_annotations, build_description, missing, opt
 
 NAME = "member"
 TITLE = "Members and roles"
@@ -73,7 +73,7 @@ def register(mcp: FastMCP) -> None:
         is_bot: bool | None = None,
         order_by: str = "",
         cursor: str = "",
-        per_page: int = 0,
+        per_page: PerPage = 0,
     ):
         client, workspace_slug = get_plane_client_context(project_id)
 

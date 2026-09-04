@@ -18,6 +18,7 @@ from plane_mcp.client import get_plane_client_context
 from plane_mcp.toolkit import (
     WORK_ITEM_TYPES,
     Action,
+    PerPage,
     build_annotations,
     build_description,
     coerce_list,
@@ -155,7 +156,7 @@ def register(mcp: FastMCP) -> None:
         external_source: str = "",
         external_id: str = "",
         cursor: str = "",
-        per_page: int = 0,
+        per_page: PerPage = 0,
     ) -> WorkItemType | list[WorkItemType] | str | None:
         client, workspace_slug = get_plane_client_context(project_id)
         types, scope, id_kwarg = _scope_of(client, project_id)

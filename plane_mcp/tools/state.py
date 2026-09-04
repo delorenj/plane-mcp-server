@@ -9,7 +9,17 @@ from plane.models.enums import GroupEnum
 from plane.models.states import CreateState, PaginatedStateResponse, State, UpdateState
 
 from plane_mcp.client import get_plane_client_context
-from plane_mcp.toolkit import Action, build_annotations, build_description, envelope, missing, needs, opt, page_params
+from plane_mcp.toolkit import (
+    Action,
+    PerPage,
+    build_annotations,
+    build_description,
+    envelope,
+    missing,
+    needs,
+    opt,
+    page_params,
+)
 
 NAME = "state"
 TITLE = "Workflow states"
@@ -71,7 +81,7 @@ def register(mcp: FastMCP) -> None:
         external_source: str = "",
         external_id: str = "",
         cursor: str = "",
-        per_page: int = 0,
+        per_page: PerPage = 0,
     ) -> State | dict[str, Any] | str | None:
         client, workspace_slug = get_plane_client_context(project_id)
 

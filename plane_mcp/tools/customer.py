@@ -15,7 +15,16 @@ from plane.models.customers import (
 )
 
 from plane_mcp.client import get_plane_client_context
-from plane_mcp.toolkit import Action, build_annotations, build_description, coerce_list, missing, opt, page_params
+from plane_mcp.toolkit import (
+    Action,
+    PerPage,
+    build_annotations,
+    build_description,
+    coerce_list,
+    missing,
+    opt,
+    page_params,
+)
 
 NAME = "customer"
 TITLE = "Customers"
@@ -133,7 +142,7 @@ def register(mcp: FastMCP) -> None:
         external_source: str = "",
         external_id: str = "",
         cursor: str = "",
-        per_page: int = 0,
+        per_page: PerPage = 0,
     ) -> Customer | PaginatedCustomerResponse | list[CustomerWorkItem] | str | None:
         client, workspace_slug = get_plane_client_context()
         customers = client.customers

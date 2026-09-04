@@ -31,7 +31,15 @@ from plane_mcp.toolkit.governance import (
     workspace_owns,
     workspace_owns_resource,
 )
-from plane_mcp.toolkit.paging import dump_results, envelope, pql_failure, workitem_page
+from plane_mcp.toolkit.paging import (
+    PER_PAGE_HINT,
+    PER_PAGE_MAX,
+    PerPage,
+    dump_results,
+    envelope,
+    pql_failure,
+    workitem_page,
+)
 from plane_mcp.toolkit.runtime import (
     as_params,
     coerce_list,
@@ -52,6 +60,8 @@ from plane_mcp.toolkit.spec import (
 from plane_mcp.toolkit.transforms import StripOutputSchemas
 
 __all__ = [
+    "PER_PAGE_HINT",
+    "PER_PAGE_MAX",
     "WORK_ITEM_TYPES",
     "Action",
     "StripOutputSchemas",
@@ -69,6 +79,7 @@ __all__ = [
     "one_of",
     "opt",
     "page_params",
+    "PerPage",
     "plan_gated",
     "plan_required",
     "pql_failure",

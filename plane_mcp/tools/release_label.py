@@ -21,6 +21,7 @@ from plane.models.releases import (
 from plane_mcp.client import get_plane_client_context
 from plane_mcp.toolkit import (
     Action,
+    PerPage,
     build_annotations,
     build_description,
     coerce_list,
@@ -82,7 +83,7 @@ def register(mcp: FastMCP) -> None:
         # 0 is a real sort position, so it cannot use the 0 sentinel.
         sort_order: int | None = None,
         cursor: str = "",
-        per_page: int = 0,
+        per_page: PerPage = 0,
     ) -> ReleaseLabel | PaginatedReleaseLabelResponse | str | None:
         client, workspace_slug = get_plane_client_context()
         labels = client.releases.labels

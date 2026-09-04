@@ -21,6 +21,10 @@ WORKSPACES_ENV = "PLANE_WORKSPACE_SLUGS"
 # and never invalidated: a project does not move between workspaces.
 _project_workspace: dict[str, str] = {}
 
+# Project identifier (the JIMB in JIMB-274) -> workspace slug. A second map
+# because the identifier-addressed calls never see a project id.
+_identifier_workspace: dict[str, str] = {}
+
 
 class PlaneClientContext(NamedTuple):
     """Context containing Plane client and workspace information."""
@@ -72,6 +76,57 @@ def resolve_workspace(client: PlaneClient, project_id: str, default_slug: str) -
         return slug
 
     logger.warning("project %s answered in none of %s; using %s", project_id, ",".join(candidates), default_slug)
+    return default_slug
+
+
+def resolve_workspace_for_identifier(client: PlaneClient, project_identifier: str, default_slug: str) -> str:
+    """Return the workspace slug holding the project with this identifier.
+
+    ``workitem retrieve_by_identifier`` is addressed as PROJECT-N and never
+    carries a project id, so ``resolve_workspace`` has nothing to work with --
+    yet PROJECT is exactly the thing that names the tenant. Each candidate's
+    project list is read once and every id/identifier in it cached, so a board
+    reached by key costs the same one call as a board reached by id.
+    """
+    if not project_identifier:
+        return default_slug
+
+    cached = _identifier_workspace.get(project_identifier)
+    if cached:
+        return cached
+
+    candidates = candidate_workspaces(default_slug)
+    if len(candidates) < 2:
+        return default_slug
+
+    for slug in candidates:
+        try:
+            response = client.projects.list_lite(workspace_slug=slug)
+        except Exception:  # noqa: BLE001 -- a workspace the key cannot read is not the one
+            continue
+        found = False
+        for project in getattr(response, "results", None) or []:
+            identifier = getattr(project, "identifier", "") or ""
+            project_id = str(getattr(project, "id", "") or "")
+            if identifier:
+                _identifier_workspace.setdefault(identifier, slug)
+            if project_id:
+                _project_workspace.setdefault(project_id, slug)
+            if identifier == project_identifier:
+                found = True
+        if found:
+            if slug != default_slug:
+                logger.info(
+                    "identifier %s resolved to workspace %s (default %s)", project_identifier, slug, default_slug
+                )
+            return slug
+
+    logger.warning(
+        "identifier %s appears in none of %s; using %s",
+        project_identifier,
+        ",".join(candidates),
+        default_slug,
+    )
     return default_slug
 
 

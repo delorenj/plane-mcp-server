@@ -14,7 +14,17 @@ from plane.models.query_params import PaginatedQueryParams, RetrieveQueryParams
 from plane.models.work_items import WorkItemForIntakeRequest
 
 from plane_mcp.client import get_plane_client_context
-from plane_mcp.toolkit import Action, as_params, build_annotations, build_description, envelope, missing, one_of, opt
+from plane_mcp.toolkit import (
+    Action,
+    PerPage,
+    as_params,
+    build_annotations,
+    build_description,
+    envelope,
+    missing,
+    one_of,
+    opt,
+)
 
 NAME = "intake"
 TITLE = "Intake queue"
@@ -70,7 +80,7 @@ def register(mcp: FastMCP) -> None:
         source: str = "",
         source_email: str = "",
         cursor: str = "",
-        per_page: int = 0,
+        per_page: PerPage = 0,
     ) -> IntakeWorkItem | dict[str, Any] | str | None:
         client, workspace_slug = get_plane_client_context(project_id)
 

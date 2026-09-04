@@ -13,7 +13,7 @@ from plane.models.releases import (
 )
 
 from plane_mcp.client import get_plane_client_context
-from plane_mcp.toolkit import Action, build_annotations, build_description, missing, opt, page_params
+from plane_mcp.toolkit import Action, PerPage, build_annotations, build_description, missing, opt, page_params
 
 NAME = "release_tag"
 TITLE = "Release tags"
@@ -56,7 +56,7 @@ def register(mcp: FastMCP) -> None:
         commit_hash: str = "",
         git_tag: str = "",
         cursor: str = "",
-        per_page: int = 0,
+        per_page: PerPage = 0,
     ) -> ReleaseTag | PaginatedReleaseTagResponse | str | None:
         client, workspace_slug = get_plane_client_context()
         tags = client.releases.tags

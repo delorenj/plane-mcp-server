@@ -29,10 +29,11 @@ from plane.models.work_items import (
 )
 from pydantic import Field
 
-from plane_mcp.client import get_plane_client_context
+from plane_mcp.client import get_plane_client_context, resolve_workspace_for_identifier
 from plane_mcp.pql_reference import PQL_FIELD_HINT
 from plane_mcp.toolkit import (
     Action,
+    PerPage,
     build_annotations,
     build_description,
     coerce_list,
@@ -238,7 +239,7 @@ def register(mcp: FastMCP) -> None:
         expand: str = "",
         fields: str = "",
         cursor: str = "",
-        per_page: int = 0,
+        per_page: PerPage = 0,
         # Tri-state: False publishes a draft, unset leaves the flag alone.
         is_draft: bool | None = None,
         archive: bool = True,
@@ -343,7 +344,7 @@ def register(mcp: FastMCP) -> None:
                     "Expected PROJECT-N, for example ENG-42."
                 )
             return client.work_items.retrieve_by_identifier(
-                workspace_slug=workspace_slug,
+                workspace_slug=resolve_workspace_for_identifier(client, head, workspace_slug),
                 project_identifier=head,
                 issue_identifier=int(sequence),
                 params=retrieve_params(),

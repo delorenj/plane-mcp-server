@@ -8,7 +8,7 @@ from fastmcp import FastMCP
 from plane.models.work_items import CreateWorkItemLink, UpdateWorkItemLink, WorkItemLink
 
 from plane_mcp.client import get_plane_client_context
-from plane_mcp.toolkit import Action, build_annotations, build_description, missing, needs, page_params
+from plane_mcp.toolkit import Action, PerPage, build_annotations, build_description, missing, needs, page_params
 
 NAME = "workitem_link"
 TITLE = "Work item links"
@@ -43,7 +43,7 @@ def register(mcp: FastMCP) -> None:
         link_id: str = "",
         url: str = "",
         cursor: str = "",
-        per_page: int = 0,
+        per_page: PerPage = 0,
     ) -> WorkItemLink | list[WorkItemLink] | str | None:
         client, workspace_slug = get_plane_client_context(project_id)
 

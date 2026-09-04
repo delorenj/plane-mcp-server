@@ -23,6 +23,7 @@ from plane.models.projects import PaginatedProjectResponse
 from plane_mcp.client import get_plane_client_context
 from plane_mcp.toolkit import (
     Action,
+    PerPage,
     build_annotations,
     build_description,
     coerce_list,
@@ -124,7 +125,7 @@ def register(mcp: FastMCP) -> None:
         lead: str = "",
         project_ids: str = "",
         cursor: str = "",
-        per_page: int = 0,
+        per_page: PerPage = 0,
     ) -> Initiative | list[Initiative] | dict[str, Any] | str | None:
         client, workspace_slug = get_plane_client_context()
 

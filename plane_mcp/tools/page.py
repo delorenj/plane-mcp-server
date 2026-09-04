@@ -15,7 +15,17 @@ from plane.models.query_params import PaginatedQueryParams
 from plane.models.work_item_pages import CreateWorkItemPage, WorkItemPage
 
 from plane_mcp.client import get_plane_client_context
-from plane_mcp.toolkit import Action, as_params, build_annotations, build_description, envelope, missing, needs, opt
+from plane_mcp.toolkit import (
+    Action,
+    PerPage,
+    as_params,
+    build_annotations,
+    build_description,
+    envelope,
+    missing,
+    needs,
+    opt,
+)
 
 NAME = "page"
 TITLE = "Pages"
@@ -83,7 +93,7 @@ def register(mcp: FastMCP) -> None:
         external_source: str = "",
         external_id: str = "",
         cursor: str = "",
-        per_page: int = 0,
+        per_page: PerPage = 0,
     ) -> Page | WorkItemPage | list[WorkItemPage] | dict[str, Any] | str | None:
         client, workspace_slug = get_plane_client_context(project_id)
 

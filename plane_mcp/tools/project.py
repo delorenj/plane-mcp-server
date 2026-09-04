@@ -18,7 +18,7 @@ from plane.models.projects import (
 from plane.models.query_params import ProjectLiteListQueryParams
 
 from plane_mcp.client import get_plane_client_context
-from plane_mcp.toolkit import Action, build_annotations, build_description, missing, needs, opt, plan_gated
+from plane_mcp.toolkit import Action, PerPage, build_annotations, build_description, missing, needs, opt, plan_gated
 
 NAME = "project"
 TITLE = "Projects"
@@ -166,7 +166,7 @@ def register(mcp: FastMCP) -> None:
         workflows: bool | None = None,
         is_time_tracking_enabled: bool | None = None,
         cursor: str = "",
-        per_page: int = 0,
+        per_page: PerPage = 0,
         order_by: str = "",
     ) -> (
         Project

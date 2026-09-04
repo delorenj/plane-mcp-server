@@ -8,7 +8,7 @@ from fastmcp import FastMCP
 from plane.models.labels import CreateLabel, Label, PaginatedLabelResponse, UpdateLabel
 
 from plane_mcp.client import get_plane_client_context
-from plane_mcp.toolkit import Action, build_annotations, build_description, envelope, missing, opt, page_params
+from plane_mcp.toolkit import Action, PerPage, build_annotations, build_description, envelope, missing, opt, page_params
 
 NAME = "label"
 TITLE = "Labels"
@@ -60,7 +60,7 @@ def register(mcp: FastMCP) -> None:
         external_source: str = "",
         external_id: str = "",
         cursor: str = "",
-        per_page: int = 0,
+        per_page: PerPage = 0,
     ) -> Label | dict[str, Any] | str | None:
         client, workspace_slug = get_plane_client_context(project_id)
 

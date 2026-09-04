@@ -8,7 +8,16 @@ from fastmcp import FastMCP
 from plane.models.work_items import WorkItemWorkLog
 
 from plane_mcp.client import get_plane_client_context
-from plane_mcp.toolkit import Action, build_annotations, build_description, missing, needs, page_params, plan_gated
+from plane_mcp.toolkit import (
+    Action,
+    PerPage,
+    build_annotations,
+    build_description,
+    missing,
+    needs,
+    page_params,
+    plan_gated,
+)
 
 NAME = "work_log"
 TITLE = "Work logs"
@@ -45,7 +54,7 @@ def register(mcp: FastMCP) -> None:
         duration: int = 0,
         description: str = "",
         cursor: str = "",
-        per_page: int = 0,
+        per_page: PerPage = 0,
     ) -> WorkItemWorkLog | list[WorkItemWorkLog] | str | None:
         client, workspace_slug = get_plane_client_context(project_id)
 

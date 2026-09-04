@@ -10,16 +10,33 @@ to these endpoints needs the same envelope and the same 400-on-bad-PQL answer.
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Annotated, Any
 
 from fastmcp.utilities.logging import get_logger
 from plane.errors.errors import HttpError
 from plane.models.query_params import WorkItemQueryParams
+from pydantic import Field
 
 from plane_mcp.pql_reference import PQL_FULL_REFERENCE
 from plane_mcp.toolkit.runtime import opt
 
 logger = get_logger(__name__)
+
+# Plane refuses per_page above 100, and the SDK enforces it with a Pydantic
+# validator -- so an over-large value is not a small page, it is an exception.
+# Nothing used to say so: `per_page: int = 0` carried no bound and no prose, and
+# a grooming agent asked for 300. Three of those in a row read to the calling
+# harness as three consecutive tool failures, which tripped its circuit breaker
+# and took every Plane tool offline for a minute. The ceiling belongs in the
+# schema the model actually reads.
+PER_PAGE_MAX = 100
+
+PER_PAGE_HINT = (
+    f"Page size, 1-{PER_PAGE_MAX} (0 = let Plane choose). Plane rejects anything "
+    f"larger; page with `cursor` instead of asking for a bigger page."
+)
+
+PerPage = Annotated[int, Field(description=PER_PAGE_HINT, ge=0, le=PER_PAGE_MAX)]
 
 
 def dump_results(items: Any, fields: str | None) -> list[Any]:

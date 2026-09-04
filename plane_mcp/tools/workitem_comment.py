@@ -8,7 +8,7 @@ from fastmcp import FastMCP
 from plane.models.work_items import CreateWorkItemComment, UpdateWorkItemComment, WorkItemComment
 
 from plane_mcp.client import get_plane_client_context
-from plane_mcp.toolkit import Action, build_annotations, build_description, missing, needs, opt, page_params
+from plane_mcp.toolkit import Action, PerPage, build_annotations, build_description, missing, needs, opt, page_params
 
 NAME = "workitem_comment"
 TITLE = "Work item comments"
@@ -56,7 +56,7 @@ def register(mcp: FastMCP) -> None:
         external_source: str = "",
         external_id: str = "",
         cursor: str = "",
-        per_page: int = 0,
+        per_page: PerPage = 0,
     ) -> WorkItemComment | list[WorkItemComment] | str | None:
         client, workspace_slug = get_plane_client_context(project_id)
 

@@ -21,6 +21,7 @@ from plane.models.releases import (
 from plane_mcp.client import get_plane_client_context
 from plane_mcp.toolkit import (
     Action,
+    PerPage,
     build_annotations,
     build_description,
     coerce_list,
@@ -150,7 +151,7 @@ def register(mcp: FastMCP) -> None:
         external_source: str = "",
         external_id: str = "",
         cursor: str = "",
-        per_page: int = 0,
+        per_page: PerPage = 0,
     ) -> Release | PaginatedReleaseResponse | PaginatedReleaseWorkItemResponse | ReleaseChangelog | str | None:
         client, workspace_slug = get_plane_client_context()
 
