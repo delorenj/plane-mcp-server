@@ -137,7 +137,7 @@ def register(mcp: FastMCP) -> None:
         is_active: bool | None = None,
         is_dependency: bool = False,
     ) -> Any:
-        client, workspace_slug = get_plane_client_context()
+        client, workspace_slug = get_plane_client_context(project_id)
 
         if action == "list_definitions":
             return {

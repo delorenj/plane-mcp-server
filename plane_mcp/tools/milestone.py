@@ -88,7 +88,7 @@ def register(mcp: FastMCP) -> None:
         cursor: str = "",
         per_page: int = 0,
     ) -> Milestone | dict[str, Any] | str | None:
-        client, workspace_slug = get_plane_client_context()
+        client, workspace_slug = get_plane_client_context(project_id)
 
         if not project_id:
             return missing(action, "project_id")

@@ -75,7 +75,7 @@ def register(mcp: FastMCP) -> None:
         cursor: str = "",
         per_page: int = 0,
     ):
-        client, workspace_slug = get_plane_client_context()
+        client, workspace_slug = get_plane_client_context(project_id)
 
         if action == "me":
             return client.users.get_me()

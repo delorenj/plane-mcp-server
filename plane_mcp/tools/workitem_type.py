@@ -157,7 +157,7 @@ def register(mcp: FastMCP) -> None:
         cursor: str = "",
         per_page: int = 0,
     ) -> WorkItemType | list[WorkItemType] | str | None:
-        client, workspace_slug = get_plane_client_context()
+        client, workspace_slug = get_plane_client_context(project_id)
         types, scope, id_kwarg = _scope_of(client, project_id)
 
         if action == "list":

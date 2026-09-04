@@ -374,7 +374,7 @@ def register(mcp: FastMCP) -> None:
         | str
         | None
     ):
-        client, workspace_slug = get_plane_client_context()
+        client, workspace_slug = get_plane_client_context(project_id)
 
         if error := one_of("property_type", property_type, PROPERTY_TYPES):
             return error

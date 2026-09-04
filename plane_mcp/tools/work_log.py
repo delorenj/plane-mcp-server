@@ -47,7 +47,7 @@ def register(mcp: FastMCP) -> None:
         cursor: str = "",
         per_page: int = 0,
     ) -> WorkItemWorkLog | list[WorkItemWorkLog] | str | None:
-        client, workspace_slug = get_plane_client_context()
+        client, workspace_slug = get_plane_client_context(project_id)
 
         if error := needs(action, project_id=project_id, workitem_id=workitem_id):
             return error

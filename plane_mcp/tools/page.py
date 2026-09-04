@@ -85,7 +85,7 @@ def register(mcp: FastMCP) -> None:
         cursor: str = "",
         per_page: int = 0,
     ) -> Page | WorkItemPage | list[WorkItemPage] | dict[str, Any] | str | None:
-        client, workspace_slug = get_plane_client_context()
+        client, workspace_slug = get_plane_client_context(project_id)
 
         if action == "list":
             params = as_params(PaginatedQueryParams, cursor=cursor, per_page=per_page)

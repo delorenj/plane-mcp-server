@@ -39,7 +39,7 @@ def _attachment(name: str, content_type: str):
 def attachment_tool(registered, spy, monkeypatch):
     """The tool, with attachment metadata present and the network stubbed out."""
     spy.returns["work_items.attachments.get_download_url"] = "https://files.example.com/a"
-    monkeypatch.setattr(module, "get_plane_client_context", lambda: (spy, "acme"))
+    monkeypatch.setattr(module, "get_plane_client_context", lambda project_id="": (spy, "acme"))
 
     def stub(name: str, content_type: str, payload: bytes = PNG):
         spy.returns["work_items.attachments.list"] = [_attachment(name, content_type)]

@@ -97,7 +97,7 @@ def register(mcp: FastMCP) -> None:
         external_source: str = "",
         external_id: str = "",
     ) -> Estimate | EstimatePoint | list[EstimatePoint] | Project | str | None:
-        client, workspace_slug = get_plane_client_context()
+        client, workspace_slug = get_plane_client_context(project_id)
 
         if not project_id:
             return missing(action, "project_id")

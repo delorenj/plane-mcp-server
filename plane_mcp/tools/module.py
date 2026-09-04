@@ -133,7 +133,7 @@ def register(mcp: FastMCP) -> None:
         per_page: int = 0,
         order_by: str = "",
     ) -> Module | PaginatedModuleLiteResponse | PaginatedArchivedModuleResponse | dict[str, Any] | str | None:
-        client, workspace_slug = get_plane_client_context()
+        client, workspace_slug = get_plane_client_context(project_id)
 
         if not project_id:
             return missing(action, "project_id")

@@ -182,7 +182,7 @@ def _invoke(tool: str, arguments: dict, module: str | None = None):
     if module:
         target = importlib.import_module(module)
         restore = (target, target.get_plane_client_context)
-        target.get_plane_client_context = lambda: (recorder, "acme")
+        target.get_plane_client_context = lambda project_id="": (recorder, "acme")
 
     async def run():
         async with Client(server_module.get_stdio_mcp()) as client:

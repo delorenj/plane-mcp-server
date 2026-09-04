@@ -177,7 +177,7 @@ def register(mcp: FastMCP) -> None:
         | str
         | None
     ):
-        client, workspace_slug = get_plane_client_context()
+        client, workspace_slug = get_plane_client_context(project_id)
 
         if timezone and timezone not in TIMEZONES:
             return f"Error: {timezone!r} is not a recognised timezone."

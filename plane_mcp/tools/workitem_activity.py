@@ -38,7 +38,7 @@ def register(mcp: FastMCP) -> None:
         cursor: str = "",
         per_page: int = 0,
     ) -> WorkItemActivity | dict[str, Any] | str:
-        client, workspace_slug = get_plane_client_context()
+        client, workspace_slug = get_plane_client_context(project_id)
 
         if error := needs(action, project_id=project_id, workitem_id=workitem_id):
             return error

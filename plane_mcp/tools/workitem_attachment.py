@@ -176,7 +176,7 @@ def register(mcp: FastMCP) -> None:
         url: str = "",
         name: str = "",
     ) -> Image | list[dict[str, Any]] | dict[str, Any] | str | None:
-        client, workspace_slug = get_plane_client_context()
+        client, workspace_slug = get_plane_client_context(project_id)
 
         if error := needs(action, project_id=project_id, workitem_id=workitem_id):
             return error

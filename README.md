@@ -143,7 +143,8 @@ unchanged.
 | Variable | Required for | Purpose |
 |---|---|---|
 | `PLANE_API_KEY` | stdio | API key |
-| `PLANE_WORKSPACE_SLUG` | stdio | Target workspace |
+| `PLANE_WORKSPACE_SLUG` | stdio | Default workspace |
+| `PLANE_WORKSPACE_SLUGS` | optional | Comma-separated workspaces to search when a project is not in the default one. One self-hosted instance can hold several, and one key can reach more than one; a project-scoped call then finds the workspace that owns the project instead of answering `403`. Unset means single-workspace behaviour, unchanged. |
 | `PLANE_BASE_URL` | optional | Plane API URL (default `https://api.plane.so`) |
 
 The remote transports carry credentials in the connection — the OAuth flow or the

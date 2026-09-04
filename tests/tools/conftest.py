@@ -77,7 +77,7 @@ def spy(monkeypatch):
     client.returns["workspaces.get_features"] = _AllFeaturesOn()
     for mod in RESOURCES:
         if hasattr(mod, "get_plane_client_context"):
-            monkeypatch.setattr(mod, "get_plane_client_context", lambda: (client, "acme"))
+            monkeypatch.setattr(mod, "get_plane_client_context", lambda project_id="": (client, "acme"))
     return client
 
 

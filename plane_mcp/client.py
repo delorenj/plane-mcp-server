@@ -10,6 +10,17 @@ from plane import PlaneClient
 
 logger = get_logger(__name__)
 
+# A self-hosted Plane instance can hold several workspaces, and one API key can
+# reach more than one of them. PLANE_WORKSPACE_SLUG names the default; when
+# PLANE_WORKSPACE_SLUGS lists more, a project id is resolved to the workspace
+# that actually owns it. Resolution is opt-in: with the plural unset there is
+# exactly one candidate and behaviour is unchanged.
+WORKSPACES_ENV = "PLANE_WORKSPACE_SLUGS"
+
+# project_id -> the workspace slug that answered for it. Populated on first use
+# and never invalidated: a project does not move between workspaces.
+_project_workspace: dict[str, str] = {}
+
 
 class PlaneClientContext(NamedTuple):
     """Context containing Plane client and workspace information."""
@@ -18,9 +29,59 @@ class PlaneClientContext(NamedTuple):
     workspace_slug: str
 
 
-def get_plane_client_context() -> PlaneClientContext:
+def candidate_workspaces(default_slug: str) -> list[str]:
+    """The workspaces to try for a project, default first, in order, deduplicated."""
+    ordered = [default_slug, *os.getenv(WORKSPACES_ENV, "").split(",")]
+    seen: dict[str, None] = {}
+    for slug in ordered:
+        slug = slug.strip()
+        if slug:
+            seen.setdefault(slug, None)
+    return list(seen)
+
+
+def resolve_workspace(client: PlaneClient, project_id: str, default_slug: str) -> str:
+    """Return the workspace slug that owns *project_id*.
+
+    Asks each candidate in turn and keeps the one that answers. A project the
+    workspace does not hold answers 404, and one outside the key's reach answers
+    403 -- both are "not this one, try the next". When nothing answers, the
+    default is returned unchanged so the caller raises the error it would have
+    raised anyway; this never converts a real failure into a different one.
+    """
+    if not project_id:
+        return default_slug
+
+    cached = _project_workspace.get(project_id)
+    if cached:
+        return cached
+
+    candidates = candidate_workspaces(default_slug)
+    if len(candidates) < 2:
+        # Nothing to choose between. Skip the probe entirely.
+        return default_slug
+
+    for slug in candidates:
+        try:
+            client.projects.retrieve(workspace_slug=slug, project_id=project_id)
+        except Exception:  # noqa: BLE001 -- any refusal means "not this workspace"
+            continue
+        if slug != default_slug:
+            logger.info("project %s resolved to workspace %s (default %s)", project_id, slug, default_slug)
+        _project_workspace[project_id] = slug
+        return slug
+
+    logger.warning("project %s answered in none of %s; using %s", project_id, ",".join(candidates), default_slug)
+    return default_slug
+
+
+def get_plane_client_context(project_id: str = "") -> PlaneClientContext:
     """
     Initialize and return a PlaneClient instance with workspace context.
+
+    Pass *project_id* from a project-scoped tool and the workspace is resolved to
+    the one that owns that project -- see ``resolve_workspace``. Omit it for
+    workspace-scoped tools, which stay on PLANE_WORKSPACE_SLUG.
 
     Authentication is handled by the PlaneOAuthProvider, which supports:
     1. Environment variables (PLANE_API_KEY + PLANE_WORKSPACE_SLUG)
@@ -70,5 +131,5 @@ def get_plane_client_context() -> PlaneClientContext:
 
     return PlaneClientContext(
         client=client,
-        workspace_slug=workspace_slug,
+        workspace_slug=resolve_workspace(client, project_id, workspace_slug),
     )

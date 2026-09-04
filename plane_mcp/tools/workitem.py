@@ -243,7 +243,7 @@ def register(mcp: FastMCP) -> None:
         is_draft: bool | None = None,
         archive: bool = True,
     ) -> WorkItem | WorkItemDetail | WorkItemSearch | dict[str, Any] | list[Any] | str | None:
-        client, workspace_slug = get_plane_client_context()
+        client, workspace_slug = get_plane_client_context(project_id)
 
         if error := one_of("priority", priority, PRIORITIES):
             return error
