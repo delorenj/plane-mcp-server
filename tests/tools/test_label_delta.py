@@ -172,3 +172,21 @@ def test_a_write_plane_kept_returns_the_item(registered, spy):
     result = registered["workitem"].fn(action="manage_label", project_id="p", workitem_id="w", add_label_id=TRIAGED)
 
     assert result is written
+
+
+@pytest.mark.parametrize("field", ["labels", "assignees"])
+def test_update_refuses_an_empty_list_too(field, registered, spy):
+    """An empty list is still a full-list write: Plane would clear every label, agent:working included."""
+    result = registered["workitem"].fn(action="update", project_id="p", workitem_id="w", **{field: []})
+
+    assert isinstance(result, str) and result.startswith("Error:"), result
+    assert "work_items.update" not in spy.recorder.methods, "wrote an empty list"
+
+
+def test_update_never_sends_label_or_assignee_lists(registered, spy):
+    registered["workitem"].fn(action="update", project_id="p", workitem_id="w", name="renamed")
+
+    assert "work_items.update" in spy.recorder.methods
+    data = next(c for c in reversed(spy.recorder.calls) if c.method == "work_items.update").kwargs["data"]
+    sent = data.model_dump(exclude_unset=True) if hasattr(data, "model_dump") else dict(data)
+    assert "labels" not in sent and "assignees" not in sent, sent

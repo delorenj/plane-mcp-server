@@ -429,18 +429,23 @@ def register(mcp: FastMCP) -> None:
             )
 
         if action == "update":
-            if sent := [name for name, value in (("labels", labels), ("assignees", assignees)) if value]:
+            # `is not None`, not truthiness: an empty list is still a full-list write,
+            # and Plane would clear every label (agent:working included).
+            if sent := [name for name, value in (("labels", labels), ("assignees", assignees)) if value is not None]:
                 return (
                     f"Error: action 'update' does not take {' or '.join(sent)}. Plane replaces the whole list on "
                     "every write, so a list read earlier erases whatever another writer added since. Use "
                     "manage_label (add_label_id / remove_label_id) or manage_assignee (add_user_id / "
                     "remove_user_id); they merge instead of replacing."
                 )
+            payload = write_payload()
+            payload.pop("labels", None)
+            payload.pop("assignees", None)
             return client.work_items.update(
                 workspace_slug=workspace_slug,
                 project_id=project_id,
                 work_item_id=workitem_id,
-                data=UpdateWorkItem(**write_payload()),
+                data=UpdateWorkItem(**payload),
             )
 
         if action == "delete":
