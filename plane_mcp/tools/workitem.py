@@ -7,6 +7,7 @@ merging them teaches the model to filter on a field the API rejects.
 
 from __future__ import annotations
 
+import os
 from html import escape
 from typing import Annotated, Any, Literal, get_args
 
@@ -73,6 +74,29 @@ WRITE_FIELDS = (
 )
 QUERY_FIELDS = ("order_by", "per_page", "cursor", "expand", "fields", "external_id", "external_source")
 
+# Plane's work item PATCH replaces the whole labels (and assignees) list. A list
+# the caller read earlier erases whatever another writer added since -- the
+# Ticket Pickup Chip's `agent:working`, a `px claim` assignee -- so `update`
+# refuses them and the manage_* actions re-read the item and apply a delta
+# immediately before the write.
+SET_FIELDS = ("labels", "assignees")
+
+# Labels that belong to the pipeline, not to whoever calls this tool.
+# `agent:working` is put on by the Ticket Pickup Chip while an agent turn runs
+# and taken off when the turn ends, and by `px claim` / `px close`; an agent that
+# removes it mid-turn (33GOD-69, 2026-09-23) erases the board's only "someone is
+# on this" signal. PLANE_RESERVED_LABELS overrides the list (comma-separated
+# names); an empty value turns the guard off.
+RESERVED_LABELS_ENV = "PLANE_RESERVED_LABELS"
+DEFAULT_RESERVED_LABELS = ("agent:working",)
+
+
+def reserved_label_names() -> set[str]:
+    raw = os.environ.get(RESERVED_LABELS_ENV)
+    names = DEFAULT_RESERVED_LABELS if raw is None else raw.split(",")
+    return {name.strip().casefold() for name in names if name.strip()}
+
+
 ACTIONS = (
     Action(
         "list",
@@ -102,7 +126,13 @@ ACTIONS = (
         read=True,
     ),
     Action("create", ("project_id", "name"), WRITE_FIELDS[1:]),
-    Action("update", ("project_id", "workitem_id"), WRITE_FIELDS, note="only the fields you pass are changed"),
+    Action(
+        "update",
+        ("project_id", "workitem_id"),
+        tuple(field for field in WRITE_FIELDS if field not in SET_FIELDS),
+        note="only the fields you pass are changed; labels and assignees change only through manage_label "
+        "and manage_assignee",
+    ),
     Action("delete", ("project_id", "workitem_id"), destructive=True),
     Action(
         "archive",
@@ -121,7 +151,8 @@ ACTIONS = (
         "manage_label",
         ("project_id", "workitem_id"),
         ("add_label_id", "remove_label_id"),
-        note="each takes one id or several; the list is merged, not replaced, and removals apply first",
+        note="each takes one id or several; the list is merged, not replaced, and removals apply first. "
+        "Leave agent:working alone: the pipeline puts it on and takes it off",
     ),
 )
 
@@ -184,6 +215,30 @@ def _description_html(description_html: str, description_stripped: str) -> str |
         return description_html
     if description_stripped:
         return "<p>" + escape(description_stripped).replace("\n", "<br/>") + "</p>"
+    return None
+
+
+def _reserved_label_refusal(
+    client: Any, workspace_slug: str, project_id: str, adding: list[str], removing: list[str]
+) -> str | None:
+    """Refuse a manage_label call that would add or remove a pipeline-owned label.
+
+    Label names are looked up here, before the item is read, so the guard does
+    not widen the read-modify-write window.
+    """
+    reserved = reserved_label_names()
+    if not reserved:
+        return None
+    for label_id in dict.fromkeys([*adding, *removing]):
+        label = client.labels.retrieve(workspace_slug=workspace_slug, project_id=project_id, label_id=label_id)
+        name = getattr(label, "name", None)
+        if isinstance(name, str) and name.strip().casefold() in reserved:
+            verb = "remove" if label_id in removing else "add"
+            return (
+                f"Error: manage_label will not {verb} '{name.strip()}'. The pipeline owns it: the Ticket Pickup "
+                "Chip puts it on while an agent turn runs and takes it off when the turn ends, and px claim / "
+                "px close set it for a claimed ticket. Leave it as it is; nothing was changed."
+            )
     return None
 
 
@@ -374,6 +429,13 @@ def register(mcp: FastMCP) -> None:
             )
 
         if action == "update":
+            if sent := [name for name, value in (("labels", labels), ("assignees", assignees)) if value]:
+                return (
+                    f"Error: action 'update' does not take {' or '.join(sent)}. Plane replaces the whole list on "
+                    "every write, so a list read earlier erases whatever another writer added since. Use "
+                    "manage_label (add_label_id / remove_label_id) or manage_assignee (add_user_id / "
+                    "remove_user_id); they merge instead of replacing."
+                )
             return client.work_items.update(
                 workspace_slug=workspace_slug,
                 project_id=project_id,
@@ -390,7 +452,11 @@ def register(mcp: FastMCP) -> None:
             operation(workspace_slug=workspace_slug, project_id=project_id, work_item_id=workitem_id)
             return {"workitem_id": workitem_id, "archived": archive}
 
-        # manage_assignee / manage_label: read the current set, mutate it, write it back.
+        # manage_assignee / manage_label: Plane's PATCH replaces the whole list,
+        # so this is a read-modify-write. Everything that can be looked up ahead
+        # of time is; the item's current set is read immediately before the write
+        # and only the requested delta is applied to it, so the window in which a
+        # concurrent writer's change can be lost is one round trip wide.
         add, remove, field = (
             (add_user_id, remove_user_id, "assignees")
             if action == "manage_assignee"
@@ -400,14 +466,31 @@ def register(mcp: FastMCP) -> None:
             return missing(action, f"add_{field[:-1]}_id or remove_{field[:-1]}_id")
         # Either side takes one id or several, so adding three assignees is one call.
         adding, removing = coerce_list(add) or [], coerce_list(remove) or []
+        if field == "labels" and (
+            refusal := _reserved_label_refusal(client, workspace_slug, project_id, adding, removing)
+        ):
+            return refusal
         current = client.work_items.retrieve(
             workspace_slug=workspace_slug, project_id=project_id, work_item_id=workitem_id
         )
         ids = [value for value in ids_of(getattr(current, field)) if value not in removing]
         ids += [value for value in adding if value not in ids]
-        return client.work_items.update(
+        written = client.work_items.update(
             workspace_slug=workspace_slug,
             project_id=project_id,
             work_item_id=workitem_id,
             data=UpdateWorkItem(**{field: ids}),
         )
+        after = getattr(written, field, None)
+        if isinstance(after, list):
+            kept = set(ids_of(after))
+            dropped = [value for value in adding if value not in kept]
+            stuck = [value for value in removing if value in kept]
+            if dropped or stuck:
+                return (
+                    f"Error: Plane answered the {field} write without the change: "
+                    f"{'not added ' + ', '.join(dropped) if dropped else ''}"
+                    f"{'; ' if dropped and stuck else ''}"
+                    f"{'not removed ' + ', '.join(stuck) if stuck else ''}. Retrieve the item before trying again."
+                )
+        return written
